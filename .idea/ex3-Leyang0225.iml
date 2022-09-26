@@ -1,0 +1,288 @@
+package slidesort;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Grid {
+    private int[][] _grid;
+
+    /**
+     * Create a new grid
+     * @param seedArray is not null
+     *                  and seedArray.length > 0
+     *                  and seedArray[0].length > 0
+     */
+    public Grid(int[][] seedArray) {
+        int rows = seedArray.length;
+        int cols = seedArray[0].length;
+        _grid = new int[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                _grid[i][j] = seedArray[i][j];
+            }
+        }
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof Grid) {
+            Grid g2 = (Grid) other;
+            if (this._grid.length != g2._grid.length) {
+                return false;
+            }
+            if (this._grid[0].length != g2._grid[0].length) {
+                return false;
+            }
+            int rows = _grid.length;
+            int cols = _grid[0].length;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    if (this._grid[i][j] != g2._grid[i][j]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * Check if this grid is a valid grid.
+     * A grid is valid if, for c = min(rows, cols),
+     * the grid contains zero or more values in [1, c]
+     * exactly once and all other entries are 0s.
+     *
+     * @return true if this is a valid grid and false otherwise
+     */
+    public boolean isValid() {
+        int n = _grid.length;
+        int m = _grid[0].length;
+        int c = Math.min(m, n);
+
+        boolean[] visit = new boolean[c + 1];
+
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                if(_grid[i][j] < 0 || _grid[i][j] > c) return false;
+                else if(_grid[i][j] == 0) continue;
+                else if(visit[_grid[i][j]]) return false;
+                else visit[_grid[i][j]] = true;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if this grid is sorted.
+     * A grid is sorted iff it is valid and,
+     *  for all pairs of entries (x, y)
+     *  such that x > 0 and y > 0,
+     *  if x < y then the position(x) < position(y).
+     * If x is at location (i, j) in the grid
+     * then position(x) = i * (number of cols) + j.
+     *
+     * @return true if the grid is sorted and false otherwise.
+     */
+    public boolean isSorted() {
+
+        if(isValid() == false) return false;
+
+        int n = _grid.length;
+        int m = _grid[0].length;
+
+        int lastValue = 0;
+
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                if(_grid[i][j] > 0){
+                    if(_grid[i][j] > lastValue) lastValue = _grid[i][j];
+                    else return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if a list of moves is feasible.
+     * A move is feasible if it starts with a non-zero entry,
+     * does not move that number off the grid,
+     * and it does not involve jumping over another non-zero number.
+     *
+     * @param   moveList is not null.
+     * @return  true if the list of moves are all feasible
+     *          and false otherwise.
+     *          By definition an empty list is always feasible.
+     */
+    public boolean validMoves(List<Move> moveList) {
+
+        int n = _grid.length;
+        int m = _grid[0].length;
+
+        int[][] fakeGrid = new int[n][m];
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                fakeGrid[i][j] = _grid[i][j];
+            }
+        }
+
+        for(Move move : moveList) {
+            Position a = move.startingPosition;
+
+            if(fakeGrid[a.i][a.j] == 0) return false;
+
+            for(int i = 1; i <= move.displacement; i++){
+                if(move.rowMove){
+                    if(a.j + i >= m) return false;
+                    if(fakeGrid[a.i][a.j + i] != 0) return false;
+                }
+                else {
+                    if(a.i + i >= n) return false;
+                    if(fakeGrid[a.i + i][a.j] != 0) return false;
+                }
+            }
+
+            if(move.rowMove){
+                fakeGrid[a.i][a.j + move.displacement] = fakeGrid[a.i][a.j];
+            }
+            else {
+                fakeGrid[a.i + move.displacement][a.j] = fakeGrid[a.i][a.j];
+            }
+            fakeGrid[a.i][a.j] = 0;
+
+
+        }
+
+        // TODO: implement this method
+        return true;
+    }
+
+    /**
+     * Apply the moves in moveList to this grid
+     * @param moveList is a valid list of moves
+     */
+    public void applyMoves(List<Move> moveList) {
+
+        for(Move move : moveList) {
+            Position a = move.startingPosition;
+
+            if(move.rowMove){
+                _grid[a.i][a.j + move.displacement] = _grid[a.i][a.j];
+            }
+            else {
+                _grid[a.i + move.displacement][a.j] = _grid[a.i][a.j];
+            }
+            _grid[a.i][a.j] = 0;
+
+
+        }
+    }
+
+    /**
+     * Return a list of moves that, when applied, would convert this grid
+     * to be sorted
+     * @return a list of moves that would sort this grid
+     */
+    public List<Move> getSortingMoves() {
+
+
+        List<Move> list = new ArrayList<>();
+        List<Move> ans = new ArrayList<>();
+
+        int n = _grid.length;
+        int m = _grid[0].length;
+
+        int[][] fakeGrid = new int[n][m];
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                fakeGrid[i][j] = _grid[i][j];
+            }
+        }
+
+        if(n == 1 || m == 1) return null;
+
+        for(int i = n - 1; i >= 0; i--){
+            for(int j = m - 1; j >= 0; j--) {
+                if(_grid[i][j] != 0) {
+                    int mx = n - 1;
+                    for(int k = i + 1; k < n; k++) {
+                        if(_grid[k][j] != 0){
+                            mx = k - 1;
+                            break;
+                        }
+                    }
+                    if(mx != i) {
+                        list.add(new Move(new Position(i, j), false, mx - i));
+                    }
+                }
+            }
+        }
+
+        applyMoves(list);
+        for(Move move : list) ans.add(move);
+        list.clear();
+
+
+        int now = 0;
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                if(_grid[i][j] != 0) {
+                    if(j != 0) list.add(new Move(new Position(i, j), true, -j));
+                    if(i != now) list.add(new Move(new Position(i, 0), false, now - i));
+                    now++;
+                }
+            }
+        }
+
+
+        applyMoves(list);
+        for(Move move : list) ans.add(move);
+        list.clear();
+
+
+        for(int i = 0; i < now; i++){
+            int mx = i;
+            for(int j = i; j < now; j++){
+                if(_grid[j][0] < _grid[mx][0]) mx = j;
+            }
+            if(mx != i) {
+                list.add(new Move(new Position(mx, 0), true, 1));
+                for(int j = mx - 1; j >= i; j--){
+                    list.add(new Move(new Position(j, 0), false, 1));
+                }
+                list.add(new Move(new Position(mx, 1), false, i - mx));
+                list.add(new Move(new Position(i, 1), true, -1));
+                applyMoves(list);
+                for(Move move : list) ans.add(move);
+                list.clear();
+            }
+        }
+
+
+
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                _grid[i][j] = fakeGrid[i][j];
+            }
+        }
+
+        return ans;
+    }
+
+    public void print() {
+        int n = _grid.length;
+        int m = _grid[0].length;
+        for(int i = 0; i < n; i ++ ){
+            for(int j = 0; j < m; j++)
+                System.out.print(_grid[i][j] + " ");
+            System.out.println();
+        }
+        System.out.print("-------------------");
+    }
+}
+</module>
