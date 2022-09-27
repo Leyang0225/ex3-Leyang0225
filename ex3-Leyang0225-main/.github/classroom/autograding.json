@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Basic Smoke Tests &#40;Public&#41;",
+      "setup": "",
+      "run": "gradle test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 1,
+      "points": null
+    }
+  ]
+}
